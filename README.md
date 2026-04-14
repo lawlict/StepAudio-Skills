@@ -1,16 +1,18 @@
-## StepAudio-Skills (StepFun TTS + ASR + Audio Chat skills)
+## StepAudio-Skills (StepFun TTS + ASR + Audio Chat + stepaudio-asr-2p5)
 
-This repository combines three standalone StepFun skills:
+This repository combines four standalone audio skills:
 
 - `step-tts`: text-to-speech and voice cloning via StepFun TTS
 - `step-asr`: speech-to-text via StepFun ASR streaming API
 - `stepfun-step-audio-r1-1`: non-streaming audio chat turns via StepFun Chat Completions (`step-audio-r1.1`)
+- `stepaudio-asr-2p5`: speech-to-text via a custom/private HTTP SSE ASR endpoint
 
-The three skills share one repo layout, while their underlying implementations remain separate:
+The skills share one repo layout, while their underlying implementations remain separate:
 
 - TTS stays in shell: `skills/step-tts/scripts/tts.sh`
 - ASR stays in Python: `skills/step-asr/scripts/transcribe.py`
 - Audio chat stays in Python: `skills/stepfun-step-audio-r1-1/scripts/stepfun_audio_chat.py`
+- `stepaudio-asr-2p5` stays in Python: `skills/stepaudio-asr-2p5/scripts/transcribe.py`
 
 ### Layout
 
@@ -18,16 +20,20 @@ The three skills share one repo layout, while their underlying implementations r
 - `skills/step-tts/scripts/tts.sh`: Main TTS CLI entrypoint
 - `skills/step-asr/SKILL.md`: Agent-facing description, triggers, and usage examples for ASR
 - `skills/step-asr/scripts/transcribe.py`: Main ASR CLI entrypoint
+- `skills/stepaudio-asr-2p5/SKILL.md`: Agent-facing description for the stepaudio-asr-2p5 backend
+- `skills/stepaudio-asr-2p5/scripts/transcribe.py`: Main stepaudio-asr-2p5 CLI entrypoint
 - `skills/stepfun-step-audio-r1-1/SKILL.md`: Agent-facing description, triggers, and usage examples for StepFun audio chat
 - `skills/stepfun-step-audio-r1-1/scripts/stepfun_audio_chat.py`: Main non-streaming StepFun audio chat CLI
 - `tests/test_step_tts_cli.sh`: Smoke tests for the TTS CLI help commands
 - `tests/test_step_asr_cli.sh`: Smoke tests for the ASR CLI help commands
+- `tests/test_stepaudio_asr_2p5_cli.sh`: Smoke tests for the stepaudio-asr-2p5 CLI
 - `tests/test_stepfun_audio_r1_1_cli.sh`: Smoke tests for the audio-chat CLI
 
 ### Prerequisites
 
 - `bash`, `curl`, `python3`
-- A valid StepFun API key
+- A valid StepFun API key for the StepFun-backed skills
+- A valid endpoint URL, API key, and model for `stepaudio-asr-2p5`
 - Optional for `stepfun-step-audio-r1-1` local audio normalization: `ffmpeg` or macOS `afconvert`
 
 ### Shared API key setup
@@ -64,13 +70,19 @@ Install just the ASR skill:
 npx skills add . --full-depth --skill step-asr -y
 ```
 
+Install just the stepaudio-asr-2p5 skill:
+
+```bash
+npx skills add . --full-depth --skill stepaudio-asr-2p5 -y
+```
+
 Install just the audio-chat skill:
 
 ```bash
 npx skills add . --full-depth --skill stepfun-step-audio-r1-1 -y
 ```
 
-Install all three skills to OpenClaw from a separate consumer project:
+Install all four skills to OpenClaw from a separate consumer project:
 
 ```bash
 cd /path/to/another/project
@@ -142,6 +154,44 @@ Output as JSON:
 
 ```bash
 python3 skills/step-asr/scripts/transcribe.py /path/to/audio.ogg --json
+```
+
+### stepaudio-asr-2p5 quick start
+
+Configure the custom endpoint:
+
+```bash
+export CUSTOM_ASR_API_URL="https://example.com/v1/audio/asr/sse"
+export CUSTOM_ASR_API_KEY="YOUR_API_KEY"
+export CUSTOM_ASR_MODEL="your-asr-model"
+```
+
+The script also accepts your demo's existing env names:
+
+```bash
+export ASR_SSE_URL="https://example.com/v1/audio/asr/sse"
+export ASR_SSE_KEY="YOUR_API_KEY"
+export ASR_SSE_MODEL="your-asr-model"
+```
+
+Transcribe with the custom backend:
+
+```bash
+python3 skills/stepaudio-asr-2p5/scripts/transcribe.py /path/to/audio.wav
+```
+
+Save the transcription to a file:
+
+```bash
+python3 skills/stepaudio-asr-2p5/scripts/transcribe.py \
+  /path/to/audio.wav \
+  --out /tmp/transcript.txt
+```
+
+Output structured JSON:
+
+```bash
+python3 skills/stepaudio-asr-2p5/scripts/transcribe.py /path/to/audio.wav --json
 ```
 
 ### Audio chat quick start
